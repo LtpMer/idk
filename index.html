@@ -2,165 +2,195 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>🔥 ULTIMATE GPU LAG 🔥</title>
+<title>Ultimate Browser Overload</title>
 <style>
   html, body {
-    margin:0; padding:0; overflow:hidden; height:100%; background:black;
+    margin:0; padding:0; overflow:hidden; height:100%; background:black; color:lime;
+    font-family: monospace;
   }
   #warning {
-    position:absolute; top:50%; left:50%;
-    transform: translate(-50%, -50%);
-    font-family: monospace;
-    font-size: 8em;
-    color: white;
-    text-shadow: 0 0 15px red, 0 0 25px orange;
-    animation: flicker 0.1s infinite alternate;
-    user-select:none;
-    pointer-events:none;
-    z-index: 10;
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+    font-size: 2em; text-shadow: 0 0 10px lime;
+    user-select:none; pointer-events:none;
+    z-index: 9999;
   }
-  @keyframes flicker {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
+  .crazy-div {
+    position: absolute;
+    width: 6px; height: 6px;
+    background: lime;
+    opacity: 0.7;
+    animation: spinScale 0.5s linear infinite;
+    mix-blend-mode: screen;
+  }
+  @keyframes spinScale {
+    0% { transform: rotate(0deg) scale(1); }
+    100% { transform: rotate(360deg) scale(4); }
   }
 </style>
 </head>
 <body>
-  <canvas id="glcanvas"></canvas>
-  <div id="warning">💥 GPU MELTDOWN 💥</div>
-  <script>
-    // WebGL setup
-    const canvas = document.getElementById('glcanvas');
-    const gl = canvas.getContext('webgl2');
-    if (!gl) alert('WebGL2 not supported');
+  <div id="warning">⚠️ SYSTEM OVERLOAD IMMINENT ⚠️</div>
+  <canvas id="gl"></canvas>
+<script>
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl2');
+let w, h;
+function resize() {
+  w = window.innerWidth;
+  h = window.innerHeight;
+  canvas.width = w;
+  canvas.height = h;
+  gl.viewport(0, 0, w, h);
+}
+window.addEventListener('resize', resize);
+resize();
 
-    let width, height;
-    function resize() {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
-      gl.viewport(0, 0, width, height);
-    }
-    window.addEventListener('resize', resize);
-    resize();
+// Shaders
+const vertexShaderSrc = `#version 300 es
+in vec2 a_position;
+in vec3 a_color;
+out vec3 v_color;
+uniform float u_time;
+void main() {
+  float angle = u_time * 20.0 + length(a_position) * 100.0;
+  vec2 pos = a_position + vec2(sin(angle), cos(angle)) * 0.05;
+  gl_Position = vec4(pos, 0, 1);
+  gl_PointSize = 10.0 + 10.0 * sin(u_time * 100.0 + length(a_position) * 200.0);
+  v_color = a_color;
+}
+`;
 
-    // Vertex shader
-    const vertexSrc = `#version 300 es
-    in vec2 a_position;
-    in vec3 a_color;
-    out vec3 v_color;
-    uniform float u_time;
-    void main() {
-      float angle = u_time + a_position.x * 10.0;
-      vec2 pos = a_position + vec2(sin(angle), cos(angle)) * 0.02;
-      gl_Position = vec4(pos, 0, 1);
-      gl_PointSize = 4.0 + 3.0 * sin(u_time * 10.0 + a_position.y * 20.0);
-      v_color = a_color;
-    }`;
+const fragmentShaderSrc = `#version 300 es
+precision highp float;
+in vec3 v_color;
+out vec4 outColor;
+uniform float u_time;
+float rand(vec2 co){
+  return fract(sin(dot(co.xy,vec2(12.9898,78.233)))*43758.5453);
+}
+void main() {
+  float glitch = step(0.98, rand(gl_FragCoord.xy + vec2(u_time)));
+  vec3 col = v_color * (0.3 + 0.7 * sin(u_time * 40.0));
+  if(glitch > 0.0) col = vec3(1.0, 0.0, 0.0);
+  outColor = vec4(col, 1.0);
+}
+`;
 
-    // Fragment shader with crazy color shifts and glitch
-    const fragmentSrc = `#version 300 es
-    precision highp float;
-    in vec3 v_color;
-    out vec4 outColor;
-    uniform float u_time;
-    void main() {
-      float glitch = step(0.95, fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233))) * 43758.5453 + u_time * 10.0));
-      vec3 color = v_color * (0.5 + 0.5 * sin(u_time * 10.0));
-      if (glitch > 0.0) color = vec3(1.0, 0.0, 0.0);
-      outColor = vec4(color, 1.0);
-    }`;
+// Compile helper
+function compileShader(type, src) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, src);
+  gl.compileShader(shader);
+  if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error(gl.getShaderInfoLog(shader));
+    return null;
+  }
+  return shader;
+}
 
-    // Compile shaders
-    function compileShader(type, src) {
-      const shader = gl.createShader(type);
-      gl.shaderSource(shader, src);
-      gl.compileShader(shader);
-      if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error(gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-        return null;
-      }
-      return shader;
-    }
+const vShader = compileShader(gl.VERTEX_SHADER, vertexShaderSrc);
+const fShader = compileShader(gl.FRAGMENT_SHADER, fragmentShaderSrc);
+const program = gl.createProgram();
+gl.attachShader(program, vShader);
+gl.attachShader(program, fShader);
+gl.linkProgram(program);
+if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+  console.error(gl.getProgramInfoLog(program));
+}
+gl.useProgram(program);
 
-    const vertexShader = compileShader(gl.VERTEX_SHADER, vertexSrc);
-    const fragmentShader = compileShader(gl.FRAGMENT_SHADER, fragmentSrc);
+// Buffers
+const NUM_POINTS = 300000;  // 300k points — very intense!
+const positions = new Float32Array(NUM_POINTS * 2);
+const colors = new Float32Array(NUM_POINTS * 3);
 
-    // Link program
-    const program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-    if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.error(gl.getProgramInfoLog(program));
-    }
+for(let i=0; i<NUM_POINTS; i++){
+  positions[i*2] = Math.random()*2 - 1;
+  positions[i*2+1] = Math.random()*2 - 1;
+  colors[i*3] = Math.random();
+  colors[i*3+1] = Math.random();
+  colors[i*3+2] = Math.random();
+}
 
-    gl.useProgram(program);
+const posBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+const posLoc = gl.getAttribLocation(program, 'a_position');
+gl.enableVertexAttribArray(posLoc);
+gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
-    // Create huge buffer of points
-    const numPoints = 30000;
-    const positions = new Float32Array(numPoints * 2);
-    const colors = new Float32Array(numPoints * 3);
+const colorBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+const colorLoc = gl.getAttribLocation(program, 'a_color');
+gl.enableVertexAttribArray(colorLoc);
+gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
 
-    for(let i=0; i<numPoints; i++) {
-      positions[i*2] = Math.random() * 2 - 1;
-      positions[i*2+1] = Math.random() * 2 - 1;
+const timeLoc = gl.getUniformLocation(program, 'u_time');
 
-      colors[i*3] = Math.random();
-      colors[i*3+1] = Math.random();
-      colors[i*3+2] = Math.random();
-    }
+let start = performance.now();
 
-    // Setup position buffer
-    const posBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-    const posLoc = gl.getAttribLocation(program, "a_position");
-    gl.enableVertexAttribArray(posLoc);
-    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+// Helper: cause CPU spike
+function cpuBurn(ms){
+  let end = performance.now() + ms;
+  while(performance.now() < end){}
+}
 
-    // Setup color buffer
-    const colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-    const colorLoc = gl.getAttribLocation(program, "a_color");
-    gl.enableVertexAttribArray(colorLoc);
-    gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
+// Animation loop
+function render() {
+  let now = performance.now();
+  let elapsed = (now - start) / 1000;
 
-    const timeLoc = gl.getUniformLocation(program, "u_time");
+  // Clear
+  gl.clearColor(0,0,0,1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // Animation loop
-    let start = performance.now();
-    function render() {
-      const now = performance.now();
-      let elapsed = (now - start) / 1000;
+  // Uniform update
+  gl.uniform1f(timeLoc, elapsed);
 
-      gl.clearColor(0, 0, 0, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT);
+  // Draw points
+  gl.drawArrays(gl.POINTS, 0, NUM_POINTS);
 
-      gl.uniform1f(timeLoc, elapsed);
+  // CPU burn ~20ms every frame
+  cpuBurn(20);
 
-      gl.drawArrays(gl.POINTS, 0, numPoints);
+  requestAnimationFrame(render);
+}
+render();
 
-      // Force heavy CPU + GPU load by adding some CPU busy wait:
-      let busyTime = performance.now() + 5; // 5ms busy loop
-      while(performance.now() < busyTime){}
+// DOM spam - 10000 small divs
+for(let i=0; i<10000; i++){
+  const d = document.createElement('div');
+  d.className = 'crazy-div';
+  d.style.top = (Math.random() * window.innerHeight) + 'px';
+  d.style.left = (Math.random() * window.innerWidth) + 'px';
+  d.style.backgroundColor = `hsl(${Math.random()*360}, 100%, 50%)`;
+  d.style.animationDuration = (0.1 + Math.random() * 0.5) + 's';
+  document.body.appendChild(d);
+}
 
-      requestAnimationFrame(render);
-    }
+// Forced layout thrash — resize body constantly to random sizes
+function layoutThrash() {
+  document.body.style.width = (window.innerWidth * (0.9 + Math.random()*0.2)) + 'px';
+  document.body.style.height = (window.innerHeight * (0.9 + Math.random()*0.2)) + 'px';
+  setTimeout(layoutThrash, 30);
+}
+layoutThrash();
 
-    render();
+// Memory leak - huge arrays allocated every 25ms
+const memLeak = [];
+setInterval(() => {
+  for(let i=0; i<50000; i++){
+    memLeak.push(new Array(100).fill(Math.random()));
+  }
+}, 25);
 
-    // Memory bloat
-    const memoryHog = [];
-    setInterval(() => {
-      for(let i=0; i<20000; i++) {
-        memoryHog.push(new Array(100).fill(Math.random()));
-      }
-    }, 50);
-  </script>
+// Flood event loop with zero-delay timers
+function floodTimers(){
+  setTimeout(floodTimers, 0);
+}
+floodTimers();
+
+</script>
 </body>
 </html>

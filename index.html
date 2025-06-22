@@ -258,23 +258,37 @@
 
         /* Loading & Message Box */
         #loading-indicator {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #1b0a2d;
-            opacity: 0.9;
-            border: 2px solid #6a05ad;
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            z-index: 1001;
-            display: none;
+            position: fixed; /* Use fixed to cover entire screen */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); /* Dark overlay */
+            display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1rem;
+            justify-content: center;
+            z-index: 10000; /* High z-index to be on top */
+            color: #e0e0e0;
+            font-size: 1.5em;
             text-align: center;
+            gap: 1rem;
         }
+        #loading-indicator::after {
+            content: '';
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #a64ac9; /* Purple */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
         #message-box {
             position: absolute;
             top: 50%;
@@ -556,12 +570,12 @@
                     <p class="text-lg text-purple-400">AI descriptions of 4D rotations will appear here.</p>
                 </div>
             </div>
-
-
-            <div id="loading-indicator" class="hidden">
-                Generating...
-            </div>
         </div>
+    </div>
+
+    <!-- Global Loading Indicator -->
+    <div id="loading-indicator">
+        Initializing App...
     </div>
 
     <div id="message-box" class="hidden">
@@ -693,6 +707,8 @@
                     showMessageBox("Authentication failed. Please refresh the page.");
                 }
             }
+            // Ensure loading indicator is hidden after auth state is resolved
+            loadingIndicator.style.display = 'none';
         });
 
         // Message Box functionality
@@ -888,7 +904,7 @@
                 xMin = newCenterX - newWidth / 2;
                 xMax = newCenterX + newWidth / 2;
                 yMin = newCenterY - newHeight / 2;
-                yMax = newCenteY + newHeight / 2;
+                yMax = newCenterY + newHeight / 2;
 
                 drawFractal();
                 updateFractalCoordsDisplay();
@@ -1945,6 +1961,9 @@
                 }
             } catch (e) {
                 console.error("Error loading sound setting:", e);
+                // Ensure sounds are enabled by default even if loading fails
+                soundsEnabled = true;
+                enableSoundsCheckbox.checked = true;
             }
         }
 
@@ -2013,7 +2032,12 @@
 
         // --- Initial Setup ---
         window.onload = function () {
-            setMode('trait');
+            // Show global loading indicator immediately
+            loadingIndicator.style.display = 'flex';
+            loadingIndicator.textContent = 'Initializing App...';
+
+            // Start authentication and settings loading
+            setMode('trait'); // Initialize in Trait Mode. onAuthStateChanged will handle the rest.
         }
 
     </script>

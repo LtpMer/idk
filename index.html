@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Universal AI Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
     <!-- Tone.js for sounds -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
     <style>
@@ -495,7 +492,7 @@
                 </div>
             </div>
 
-            <p class="text-sm text-center mt-auto text-purple-300">User ID: <span id="user-id-display">Loading...</span></p>
+            <p class="text-sm text-center mt-auto text-purple-300">Mode: <span id="user-id-display">Offline</span></p>
         </div>
 
         <div class="main-content">
@@ -573,9 +570,9 @@
         </div>
     </div>
 
-    <!-- Global Loading Indicator -->
+    <!-- Global Loading Indicator (only for initial app load now) -->
     <div id="loading-indicator">
-        Initializing App...
+        Loading Application...
     </div>
 
     <div id="message-box" class="hidden">
@@ -600,17 +597,7 @@
     </div>
 
     <script type="module">
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-
-        // Initialize Firebase
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        let userId = '';
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Removed Firebase imports
 
         // Declare drag-related variables at the top level
         let currentDraggedElement = null;
@@ -640,7 +627,7 @@
             }
         }).toDestination();
         let isLaserActive = false;
-        let soundsEnabled = true; // Global sound setting
+        let soundsEnabled = true; // Global sound setting - defaults to true, no persistence
 
 
         function playClickSound() {
@@ -688,29 +675,6 @@
             }
         }
 
-
-        // Firebase Auth State Listener
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-                document.getElementById('user-id-display').textContent = userId;
-                await loadSoundSetting(); // Load sound setting after user is authenticated
-            } else {
-                try {
-                    if (typeof __initial_auth_token !== 'undefined') {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (error) {
-                    console.error("Firebase authentication error:", error);
-                    showMessageBox("Authentication failed. Please refresh the page.");
-                }
-            }
-            // Ensure loading indicator is hidden after auth state is resolved
-            loadingIndicator.style.display = 'none';
-        });
-
         // Message Box functionality
         function showMessageBox(message) {
             const msgBox = document.getElementById('message-box');
@@ -753,7 +717,6 @@
 
         // Drag & Drop Material Palette and Dropzone
         const materialDragPalette = document.getElementById('material-drag-palette');
-        // Renamed materialCompositionDropzone to materialCompositionDropzoneOuter for better clarity in HTML/JS
         const materialCompositionDropzoneOuter = document.getElementById('material-composition-dropzone-outer');
         const materialCompositionContent = document.getElementById('material-composition-content');
 
@@ -945,7 +908,7 @@
         // Sound settings checkbox listener
         enableSoundsCheckbox.addEventListener('change', () => {
             soundsEnabled = enableSoundsCheckbox.checked;
-            saveSoundSetting(soundsEnabled);
+            // No saving to Firestore, just update local state
         });
 
         // --- Drag and Drop Logic (Unified for DNA/Material) ---
@@ -1107,7 +1070,6 @@
             currentMaterialInputMode = mode;
             manualMaterialInputsDiv.classList.toggle('hidden', mode === 'drag_drop');
             materialDragPalette.classList.toggle('hidden', mode === 'manual');
-            // Control visibility of the material dropzone outer div
             materialCompositionDropzoneOuter.classList.toggle('hidden', mode === 'manual');
 
             if (mode === 'drag_drop') {
@@ -1389,9 +1351,7 @@
             } finally {
                 loadingIndicator.style.display = 'none';
             }
-
-            // Save the generated creature to Firestore
-            saveGeneratedItem(dnaSequence, aiDescription, currentMode, null);
+            // Removed saveGeneratedItem call
         }
 
         // --- Material Generation Flow (Description AND Image) ---
@@ -1516,8 +1476,7 @@
                 loadingIndicator.style.display = 'none';
             }
 
-            // Save the generated material (description and image URL) to Firestore
-            saveGeneratedItem(inputContent, materialDescription, currentMode, imageUrl);
+            // Removed saveGeneratedItem call
         }
 
         // --- Math Mode Functions ---
@@ -1611,7 +1570,7 @@
 
             try {
                 let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: mathDescriptionPrompt }] });
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                 const payload = { contents: chatHistory };
                 const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
@@ -1645,9 +1604,7 @@
             } finally {
                 loadingIndicator.style.display = 'none';
             }
-
-            // Save math generation to Firestore
-            saveGeneratedItem({ expression, shapeType, shapeNumberStr, calculationResult }, null, currentMode, null);
+            // Removed saveGeneratedItem call
         }
 
         function drawShape(type, params) {
@@ -1791,7 +1748,7 @@
             }
             loadingIndicator.style.display = 'none';
             playGenerateSuccessSound();
-            saveGeneratedItem({ type, xMin, xMax, yMin, yMax, maxIterations, juliaCx, juliaCy }, "Fractal rendered", currentMode, null);
+            // Removed saveGeneratedItem call
             return iterationGrid;
         }
 
@@ -1867,7 +1824,7 @@
                     const description = result.candidates[0].content.parts[0].text;
                     fractalDescriptionOutput.textContent = description;
                     showMessageBox(`4D rotation along ${axis}-axis described.`);
-                    saveGeneratedItem({ fractalType, rotationAxis: axis, description }, description, currentMode, null);
+                    // Removed saveGeneratedItem call
                 } else {
                     showMessageBox("Failed to generate 4D rotation description. Try again.");
                     console.error("Unexpected AI text response structure for 4D rotation:", result);
@@ -1924,120 +1881,13 @@
             }
         }
 
-
-        // --- Firestore Saving and Loading ---
-        const settingsDocRef = (uid) => doc(db, `artifacts/${appId}/users/${uid}/settings/userPreferences`);
-
-        async function saveSoundSetting(enabled) {
-            if (!userId) {
-                console.warn("User ID not available, cannot save sound setting.");
-                return;
-            }
-            try {
-                await setDoc(settingsDocRef(userId), { soundEnabled: enabled }, { merge: true });
-                console.log("Sound setting saved:", enabled);
-            } catch (e) {
-                console.error("Error saving sound setting:", e);
-            }
-        }
-
-        async function loadSoundSetting() {
-            if (!userId) {
-                console.warn("User ID not available, cannot load sound setting.");
-                return;
-            }
-            try {
-                const docSnap = await getDoc(settingsDocRef(userId));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (typeof data.soundEnabled === 'boolean') {
-                        soundsEnabled = data.soundEnabled;
-                        enableSoundsCheckbox.checked = soundsEnabled;
-                        console.log("Sound setting loaded:", soundsEnabled);
-                    }
-                } else {
-                    // No existing setting, save default
-                    await saveSoundSetting(soundsEnabled);
-                }
-            } catch (e) {
-                console.error("Error loading sound setting:", e);
-                // Ensure sounds are enabled by default even if loading fails
-                soundsEnabled = true;
-                enableSoundsCheckbox.checked = true;
-            }
-        }
-
-
-        async function saveGeneratedItem(inputData, description, mode, imageUrl = null) {
-            if (!userId) {
-                console.warn("User ID not available for saving item.");
-                return;
-            }
-
-            try {
-                const collectionPath = `artifacts/${appId}/users/${userId}/${mode}Generations`;
-                const docData = {
-                    mode: mode,
-                    description: description,
-                    timestamp: serverTimestamp(),
-                    userId: userId
-                };
-
-                if (mode === 'material') {
-                    if (currentMaterialInputMode === 'manual') {
-                        docData.materialName = inputData.name;
-                        docData.materialState = inputData.state;
-                        docData.materialProperties = inputData.properties;
-                        docData.materialChemistry = inputData.chemistry;
-                        docData.materialUse = inputData.use;
-                    } else { // drag_drop
-                        docData.materialComposition = inputData;
-                    }
-                    docData.imageUrl = imageUrl;
-                } else if (mode === 'math') {
-                    docData.mathExpression = inputData.expression;
-                    docData.calculationResult = inputData.calculationResult;
-                    docData.shapeType = inputData.shapeType;
-                    docData.shapeNumberStr = inputData.shapeNumberStr;
-                } else if (mode === 'fractal') {
-                    docData.fractalType = inputData.type;
-                    docData.xMin = inputData.xMin;
-                    docData.xMax = inputData.xMax;
-                    docData.yMin = inputData.yMin;
-                    docData.yMax = inputData.yMax;
-                    docData.maxIterations = inputData.maxIterations;
-                    if (inputData.type === 'julia') {
-                        docData.juliaCx = inputData.juliaCx;
-                        docData.juliaCy = inputData.juliaCy;
-                    }
-                    if (inputData.rotationAxis) {
-                        docData.rotationAxis = inputData.rotationAxis;
-                        docData.rotationDescription = description;
-                    } else {
-                        docData.description = description;
-                    }
-                }
-                else { // Trait or DNA Base Mode
-                    docData.dnaSequence = inputData;
-                    docData.imageUrl = imageUrl;
-                }
-
-                await addDoc(collection(db, collectionPath), docData);
-                console.log(`${mode} generation saved to Firestore!`);
-            } catch (e) {
-                console.error(`Error saving ${mode} generation to Firestore: `, e);
-                showMessageBox(`Failed to save ${mode} generation. Check console for details.`);
-            }
-        }
+        // Removed Firebase related save/load functions
 
         // --- Initial Setup ---
         window.onload = function () {
-            // Show global loading indicator immediately
-            loadingIndicator.style.display = 'flex';
-            loadingIndicator.textContent = 'Initializing App...';
-
-            // Start authentication and settings loading
-            setMode('trait'); // Initialize in Trait Mode. onAuthStateChanged will handle the rest.
+            setMode('trait'); // Initialize in Trait Mode
+            // Hide the global loading indicator now that the basic app is ready
+            loadingIndicator.style.display = 'none';
         }
 
     </script>

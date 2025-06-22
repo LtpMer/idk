@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Universal AI Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tone.js for sounds -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
@@ -122,7 +121,7 @@
             margin-bottom: 0.5rem;
             color: #d1c4e9;
         }
-        input[type="text"], textarea, select {
+        input[type="text"], textarea, select, input[type="number"] {
             background-color: #1b0a2d;
             border: 1px solid #6a05ad;
             border-radius: 0.5rem;
@@ -387,15 +386,12 @@
                 <button id="dna-mode-button" class="mode-button">DNA Mode</button>
                 <button id="material-mode-button" class="mode-button">Material Mode</button>
                 <button id="math-mode-button" class="mode-button">Math Mode</button>
-                <button id="fractal-mode-button" class="mode-button">Fractal Mode</button> <!-- New Fractal Mode Button -->
-            </div>
+                <button id="fractal-mode-button" class="mode-button">Fractal Mode</button> </div>
 
-            <!-- DNA/Creature Controls (visible in Trait/DNA modes) -->
             <div id="creature-controls">
                 <h2 class="text-xl font-bold text-center text-purple-200 mt-6 mb-4">DNA Components</h2>
                 <div id="dna-components-palette" class="grid grid-cols-2 gap-3">
-                    <!-- DNA Components will be populated here by JS -->
-                </div>
+                    </div>
                 <h2 class="text-xl font-bold text-center text-purple-200 mt-6 mb-4">Preset Beings</h2>
                 <div id="preset-buttons-container" class="grid grid-cols-2 gap-3">
                     <button id="preset-human" class="preset-button">Humanoid</button>
@@ -405,7 +401,6 @@
                 </div>
             </div>
 
-            <!-- Material Controls (visible in Material mode) -->
             <div id="material-controls" class="hidden">
                 <h2 class="text-xl font-bold text-center text-purple-200 mt-6 mb-4">Material Input Type</h2>
                 <div class="sub-mode-group">
@@ -415,7 +410,6 @@
                     </div>
                 </div>
 
-                <!-- Manual Material Inputs (initially visible in Material mode) -->
                 <div id="manual-material-inputs">
                     <h2 class="text-xl font-bold text-center text-purple-200 mt-6 mb-4">Material Properties</h2>
                     <label for="material-name">Material Name (Optional):</label>
@@ -440,13 +434,10 @@
                     <textarea id="material-use" placeholder="e.g., Spaceship hull, Energy storage, Medical implant, Living building material"></textarea>
                 </div>
 
-                <!-- Drag & Drop Material Palette (initially hidden) -->
                 <div id="material-drag-palette" class="hidden grid grid-cols-2 gap-3 mt-6">
-                    <!-- Material Components will be populated here by JS -->
-                </div>
+                    </div>
             </div>
 
-            <!-- Math Controls (visible in Math mode) -->
             <div id="math-controls" class="hidden">
                 <h2 class="text-xl font-bold text-center text-purple-200 mt-6 mb-4">Mathematical Operations</h2>
                 <label for="math-expression">Enter Math Expression:</label>
@@ -460,7 +451,6 @@
                 <input type="text" id="shape-number" placeholder="e.g., 5 or 6,4">
             </div>
 
-            <!-- Fractal Controls (visible in Fractal mode) -->
             <div id="fractal-controls" class="hidden">
                 <h2 class="text-xl font-bold text-center text-purple-200 mt-6 mb-4">Fractal Parameters</h2>
                 <label for="fractal-type">Fractal Type:</label>
@@ -488,8 +478,7 @@
                 <div class="fractal-4d-buttons">
                     <button id="rotate-4d-x">Rotate 4D X</button>
                     <button id="rotate-4d-y">Rotate 4D Y</button>
-                    <!-- Add more 4D rotation axes if desired -->
-                </div>
+                    </div>
             </div>
 
             <p class="text-sm text-center mt-auto text-purple-300">Mode: <span id="user-id-display">Offline</span></p>
@@ -504,21 +493,17 @@
                 <button id="settings-button">Settings</button>
             </div>
 
-            <!-- Creature Display Area -->
             <div id="creature-display-area">
                 <div id="creature-image-container">
                     <img id="creature-image" src="" alt="Generated Creature" style="display: none;">
                     <p id="image-placeholder" class="text-lg text-purple-400">Your creature will appear here!</p>
                 </div>
-                <!-- DNA Strand Dropzone moved to bottom of creature display area -->
                 <div id="dna-strand-dropzone" class="mb-4">
                     <p class="text-lg text-purple-400">Drag DNA components here to build your creature's genetic code.</p>
                 </div>
             </div>
 
-            <!-- Material Output Area (initially hidden) -->
             <div id="material-output-area" class="hidden w-full">
-                <!-- Material Description & Image are always together now -->
                 <h2 class="text-xl font-bold text-purple-200 mt-4 mb-2">Material Description:</h2>
                 <div id="material-description-output">
                     <p class="text-lg text-purple-400">Your material description will appear here.</p>
@@ -529,7 +514,6 @@
                     <img id="material-image" src="" alt="Generated Material Image" style="display: none;">
                     <p id="material-image-placeholder" class="text-lg text-purple-400">Your material image will appear here.</p>
                 </div>
-                <!-- Material Composition Dropzone moved to bottom of material output area -->
                 <div id="material-composition-dropzone-outer" class="hidden mt-6">
                     <h2 class="text-xl font-bold text-purple-200 mb-2">Material Composition Dropzone</h2>
                     <div class="min-h-[100px] border-2 border-dashed border-[#6a05ad] bg-[#1b0a2d] rounded-xl p-4 flex flex-wrap gap-2 items-center justify-center" id="material-composition-content">
@@ -538,7 +522,6 @@
                 </div>
             </div>
 
-            <!-- Math Display Area (initially hidden) -->
             <div id="math-display-area" class="hidden w-full">
                 <h2 class="text-xl font-bold text-purple-200 mt-4 mb-2">Numerical Result:</h2>
                 <div id="math-result-output">
@@ -554,7 +537,6 @@
                 </div>
             </div>
 
-            <!-- Fractal Display Area (initially hidden) -->
             <div id="fractal-display-area" class="hidden w-full flex flex-col items-center">
                 <h2 class="text-xl font-bold text-purple-200 mt-4 mb-2">Fractal View:</h2>
                 <canvas id="fractal-canvas"></canvas>
@@ -570,7 +552,6 @@
         </div>
     </div>
 
-    <!-- Global Loading Indicator (only for initial app load now) -->
     <div id="loading-indicator">
         Loading Application...
     </div>
@@ -580,7 +561,6 @@
         <button id="message-box-close">Close</button>
     </div>
 
-    <!-- Settings Modal -->
     <div id="settings-modal" class="settings-modal hidden">
         <div class="settings-content">
             <h3>Settings</h3>
@@ -597,8 +577,6 @@
     </div>
 
     <script type="module">
-        // Removed Firebase imports
-
         // Declare drag-related variables at the top level
         let currentDraggedElement = null;
         let dragOffsetX = 0;
@@ -817,7 +795,7 @@
             "Carbon", "Iron", "Silicon", "Gold", "Water", "Hydrogen", "Oxygen", "Nitrogen", "Aluminum", "Copper",
             "Metallic", "Ceramic", "Polymer", "Amorphous", "Crystalline",
             "Transparent", "Opaque", "Translucent", "Reflective", "Absorbent",
-            "Conductive (Electrical)", "Insulating (Electrical)", "Conductive (Thermal)", "Insulating (Thermal)",
+            "Conductive (Electrical)", "Insulating (Electrical)", "Conductive (Thermal)", "Insulating ( (Thermal)",
             "Flexible", "Rigid", "Elastic", "Brittle", "Malleable", "Ductile",
             "Liquid (Viscous)", "Liquid (Low Viscosity)", "Gas (Light)", "Gas (Dense)", "Plasma (Stable)", "Plasma (Volatile)",
             "Superconducting", "Self-repairing", "Bioluminescent", "Radioactive", "Non-reactive", "Catalytic",
@@ -1274,6 +1252,7 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: [{ text: textPrompt }] });
                 const payload = { contents: chatHistory };
+                // The apiKey variable will be automatically populated by the Canvas environment
                 const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
@@ -1317,6 +1296,7 @@
 
             try {
                 const payload = { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1} };
+                // The apiKey variable will be automatically populated by the Canvas environment
                 const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
 
@@ -1351,7 +1331,6 @@
             } finally {
                 loadingIndicator.style.display = 'none';
             }
-            // Removed saveGeneratedItem call
         }
 
         // --- Material Generation Flow (Description AND Image) ---
@@ -1401,6 +1380,7 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: [{ text: materialPrompt }] });
                 const payload = { contents: chatHistory };
+                // The apiKey variable will be automatically populated by the Canvas environment
                 const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
@@ -1441,6 +1421,7 @@
             let imageUrl = null;
             try {
                 const payload = { instances: { prompt: imagePrompt }, parameters: { "sampleCount": 1} };
+                // The apiKey variable will be automatically populated by the Canvas environment
                 const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
 
@@ -1475,8 +1456,6 @@
             } finally {
                 loadingIndicator.style.display = 'none';
             }
-
-            // Removed saveGeneratedItem call
         }
 
         // --- Math Mode Functions ---
@@ -1570,8 +1549,9 @@
 
             try {
                 let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                chatHistory.push({ role: "user", parts: [{ text: mathDescriptionPrompt }] }); // Corrected prompt variable
                 const payload = { contents: chatHistory };
+                // The apiKey variable will be automatically populated by the Canvas environment
                 const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
@@ -1604,7 +1584,6 @@
             } finally {
                 loadingIndicator.style.display = 'none';
             }
-            // Removed saveGeneratedItem call
         }
 
         function drawShape(type, params) {
@@ -1748,7 +1727,6 @@
             }
             loadingIndicator.style.display = 'none';
             playGenerateSuccessSound();
-            // Removed saveGeneratedItem call
             return iterationGrid;
         }
 
@@ -1803,6 +1781,7 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                 const payload = { contents: chatHistory };
+                // The apiKey variable will be automatically populated by the Canvas environment
                 const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
@@ -1824,7 +1803,6 @@
                     const description = result.candidates[0].content.parts[0].text;
                     fractalDescriptionOutput.textContent = description;
                     showMessageBox(`4D rotation along ${axis}-axis described.`);
-                    // Removed saveGeneratedItem call
                 } else {
                     showMessageBox("Failed to generate 4D rotation description. Try again.");
                     console.error("Unexpected AI text response structure for 4D rotation:", result);
@@ -1880,8 +1858,6 @@
                 stopLaserSound();
             }
         }
-
-        // Removed Firebase related save/load functions
 
         // --- Initial Setup ---
         window.onload = function () {

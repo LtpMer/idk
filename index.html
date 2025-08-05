@@ -3,167 +3,430 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Particle Animation</title>
-    <!-- Load Tailwind CSS for styling -->
+    <title>Particle Text Effect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text color */
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
             height: 100vh;
-            background-color: #0d1117; /* Dark background for better contrast */
-            color: #ffffff;
             margin: 0;
-            overflow: hidden;
+            overflow: hidden; /* Hide scrollbars */
         }
         canvas {
-            background-color: transparent;
             display: block;
-            border-radius: 1rem;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            cursor: grab;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        .controls-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: #2d3748;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            transform: translateY(100%);
+            transition: transform 0.5s ease-in-out;
+            z-index: 10;
+        }
+        .controls-container.active {
+            transform: translateY(0);
+        }
+        .controls {
+            display: flex;
+            gap: 1rem;
+            width: 90%;
+            max-width: 600px;
+            align-items: center;
+        }
+        textarea {
+            flex-grow: 1;
+            height: 60px;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            border: 2px solid #4a5568;
+            background-color: #1a202c;
+            color: #e2e8f0;
+            resize: none;
+            font-size: 1rem;
+            line-height: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+        }
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #4a5568;
+            transition: border-color 0.3s ease;
+        }
+        .color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-picker::-webkit-color-swatch {
+            border: none;
+        }
+        .color-picker:hover {
+            border-color: #4299e1;
+        }
+        .action-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            color: #1a202c;
+            background: linear-gradient(to right, #4299e1, #63b3ed);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+        }
+        .action-button:active {
+            transform: translateY(1px);
+        }
+        .toggle-button {
+            position: fixed;
+            bottom: 2vh;
+            right: 2vh;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s;
+            z-index: 11;
+            cursor: pointer;
+        }
+        .toggle-button:hover {
+            transform: scale(1.1);
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white">
+<body>
 
-    <h1 class="text-3xl font-bold mb-4">Forming "Hi" with Particles</h1>
-
-    <div class="relative w-full h-full flex justify-center items-center">
-        <canvas id="particleCanvas"></canvas>
+    <div id="controls-container" class="controls-container">
+        <div class="controls">
+            <textarea id="text-input" placeholder="Enter text..."></textarea>
+            <input type="color" id="color-picker" value="#00ffff" class="color-picker">
+            <button id="animate-button" class="action-button">Animate</button>
+        </div>
     </div>
-
-    <button id="restartButton" class="mt-8 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg transition-transform transform hover:scale-105">
-        Restart Animation
+    
+    <button id="toggle-button" class="toggle-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sliders-horizontal"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
     </button>
+    
+    <canvas id="particleCanvas"></canvas>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        // Use a self-invoking function to avoid global variables
+        (function() {
+            // --- Canvas and Context Setup ---
             const canvas = document.getElementById('particleCanvas');
-            const ctx = canvas.getContext('2d');
-            const restartButton = document.getElementById('restartButton');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const textInput = document.getElementById('text-input');
+            const colorPicker = document.getElementById('color-picker');
+            const animateButton = document.getElementById('animate-button');
+            const toggleButton = document.getElementById('toggle-button');
+            const controlsContainer = document.getElementById('controls-container');
 
             let particles = [];
-            const textToAnimate = "Hi";
+            const particleSize = 1.5;
+            let animationFrameId = null;
+            let isAnimating = false;
+            let textValue = 'Hello';
 
-            // Set canvas size to fill the viewport
-            function resizeCanvas() {
+            // --- Pan and Zoom State ---
+            let pan = { x: 0, y: 0 };
+            let zoom = 1;
+            let isDragging = false;
+            let lastMouse = { x: 0, y: 0 };
+
+            // --- Window and Canvas Resizing ---
+            function handleResize() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
             }
+            window.addEventListener('resize', handleResize);
+            handleResize();
 
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
+            // --- Pan and Zoom Interaction ---
+            canvas.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                lastMouse = { x: e.clientX, y: e.clientY };
+            });
 
-            /**
-             * The Particle class represents an individual particle in the animation.
-             * It has properties for its current position, target position, and color.
-             */
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const dx = e.clientX - lastMouse.x;
+                    const dy = e.clientY - lastMouse.y;
+                    pan.x += dx;
+                    pan.y += dy;
+                    lastMouse = { x: e.clientX, y: e.clientY };
+                }
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomFactor = 1.1;
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
+                const oldZoom = zoom;
+
+                if (e.deltaY < 0) {
+                    zoom *= zoomFactor;
+                } else {
+                    zoom /= zoomFactor;
+                }
+
+                zoom = Math.max(0.1, Math.min(5, zoom)); // Clamp zoom level
+
+                // Adjust pan to zoom around the mouse position
+                pan.x -= (mouseX - pan.x) * (zoom - oldZoom) / oldZoom;
+                pan.y -= (mouseY - pan.y) * (zoom - oldZoom) / oldZoom;
+            });
+
+            // Touch events for mobile pan and zoom
+            let touchDist = 0;
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                } else if (e.touches.length === 2) {
+                    touchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                }
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (e.touches.length === 1 && isDragging) {
+                    const dx = e.touches[0].clientX - lastMouse.x;
+                    const dy = e.touches[0].clientY - lastMouse.y;
+                    pan.x += dx;
+                    pan.y += dy;
+                    lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                } else if (e.touches.length === 2) {
+                    const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    const zoomFactor = newDist / touchDist;
+                    const oldZoom = zoom;
+                    zoom *= zoomFactor;
+
+                    zoom = Math.max(0.1, Math.min(5, zoom)); // Clamp zoom level
+
+                    // Adjust pan to zoom around the center of the touch points
+                    const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+                    pan.x -= (centerX - pan.x) * (zoom - oldZoom) / oldZoom;
+                    pan.y -= (centerY - pan.y) * (zoom - oldZoom) / oldZoom;
+
+                    touchDist = newDist;
+                }
+            });
+
+            canvas.addEventListener('touchend', () => {
+                isDragging = false;
+            });
+
+
+            // --- Particle Class Definition ---
             class Particle {
-                constructor(x, y) {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() * canvas.height;
-                    // Initial velocity is set to a random position on the canvas edges
-                    if (Math.random() > 0.5) {
-                        this.x = Math.random() > 0.5 ? 0 : canvas.width;
-                    } else {
-                        this.y = Math.random() > 0.5 ? 0 : canvas.height;
-                    }
+                constructor(x, y, color) {
                     this.targetX = x;
                     this.targetY = y;
-                    this.color = `hsl(${Math.random() * 360}, 100%, 75%)`; // Random color
-                    this.speed = 0.05 + Math.random() * 0.05; // Randomize speed for a dynamic effect
+                    
+                    // Spawn particles from a random edge
+                    const edge = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
+                    switch (edge) {
+                        case 0: // Top
+                            this.x = Math.random() * canvas.width;
+                            this.y = -particleSize;
+                            break;
+                        case 1: // Right
+                            this.x = canvas.width + particleSize;
+                            this.y = Math.random() * canvas.height;
+                            break;
+                        case 2: // Bottom
+                            this.x = Math.random() * canvas.width;
+                            this.y = canvas.height + particleSize;
+                            break;
+                        case 3: // Left
+                            this.x = -particleSize;
+                            this.y = Math.random() * canvas.height;
+                            break;
+                    }
+
+                    this.size = particleSize;
+                    this.color = color;
+                    this.ease = 0.05;
                 }
 
+                // Update particle position
                 update() {
-                    // Move the particle closer to its target position
-                    this.x += (this.targetX - this.x) * this.speed;
-                    this.y += (this.targetY - this.y) * this.speed;
+                    const dx = this.targetX - this.x;
+                    const dy = this.targetY - this.y;
+                    this.x += dx * this.ease;
+                    this.y += dy * this.ease;
                 }
 
+                // Draw particle on canvas with pan and zoom applied
                 draw() {
-                    // Draw the particle as a small, glowing circle
                     ctx.fillStyle = this.color;
                     ctx.beginPath();
-                    ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2);
+                    ctx.arc(this.x * zoom + pan.x, this.y * zoom + pan.y, this.size * zoom, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
 
-            /**
-             * Initializes the particles by drawing the text off-screen and
-             * creating a particle for each pixel of the text.
-             */
-            function initParticles() {
+            // --- Text to Particles Conversion ---
+            function createParticles() {
+                // Clear existing particles
                 particles = [];
-                // Create a temporary off-screen canvas to render the text
-                const tempCanvas = document.createElement('canvas');
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = canvas.height;
+
+                if (textValue.trim() === '') {
+                    return;
+                }
+
+                const particleColor = colorPicker.value;
+
+                // Create a temporary canvas to draw text and get pixel data
+                const textCanvas = document.createElement('canvas');
+                const textCtx = textCanvas.getContext('2d');
+                textCtx.font = 'bold 200px Inter';
+                textCtx.fillStyle = 'white';
+                textCtx.textAlign = 'center';
+                textCtx.textBaseline = 'middle';
                 
-                // Text properties
-                tempCtx.font = "bold 200px Inter";
-                tempCtx.textAlign = "center";
-                tempCtx.textBaseline = "middle";
-                tempCtx.fillStyle = "#ffffff";
-                
-                // Get the text dimensions to center it
-                const textMetrics = tempCtx.measureText(textToAnimate);
-                const textWidth = textMetrics.width;
-                const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+                const metrics = textCtx.measureText(textValue);
+                const textWidth = metrics.width;
+                const textHeight = 200;
 
-                tempCtx.fillText(textToAnimate, canvas.width / 2, canvas.height / 2);
+                textCanvas.width = textWidth + 40;
+                textCanvas.height = textHeight + 40;
 
-                // Get the image data from the temporary canvas
-                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                textCtx.font = 'bold 200px Inter';
+                textCtx.fillStyle = 'white';
+                textCtx.textAlign = 'center';
+                textCtx.textBaseline = 'middle';
+                textCtx.fillText(textValue, textCanvas.width / 2, textCanvas.height / 2);
 
-                // Iterate through the pixels of the text to create particles
-                for (let y = 0; y < imageData.height; y += 4) {
-                    for (let x = 0; x < imageData.width; x += 4) {
-                        const alpha = imageData.data[(y * imageData.width + x) * 4 + 3];
-                        // If the pixel is not transparent, create a particle at that position
-                        if (alpha > 128) {
-                            particles.push(new Particle(x, y));
+                const imageData = textCtx.getImageData(0, 0, textCanvas.width, textCanvas.height).data;
+                const particleDensity = 4;
+
+                const textCenterX = canvas.width / 2 - textCanvas.width / 2;
+                const textCenterY = canvas.height / 2 - textCanvas.height / 2;
+
+                for (let y = 0; y < textCanvas.height; y += particleDensity) {
+                    for (let x = 0; x < textCanvas.width; x += particleDensity) {
+                        const index = (y * textCanvas.width + x) * 4;
+                        const alpha = imageData[index + 3];
+
+                        if (alpha > 0) {
+                            const particleX = x + textCenterX;
+                            const particleY = y + textCenterY;
+                            particles.push(new Particle(particleX, particleY, particleColor));
                         }
                     }
                 }
             }
 
-            /**
-             * The main animation loop.
-             * It clears the canvas, updates and draws each particle.
-             */
+            // --- Animation Loop ---
             function animate() {
-                // Clear the entire canvas with a semi-transparent black overlay
-                // This creates a trail effect for the particles
-                ctx.fillStyle = 'rgba(13, 17, 23, 0.1)';
+                ctx.fillStyle = 'rgba(26, 32, 44, 0.2)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // Update and draw each particle
-                particles.forEach(particle => {
-                    particle.update();
-                    particle.draw();
-                });
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+                }
 
-                requestAnimationFrame(animate);
+                animationFrameId = requestAnimationFrame(animate);
             }
 
-            // Function to restart the animation
-            function restart() {
-                initParticles();
+            function startAnimation() {
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                isAnimating = true;
+                animateButton.textContent = 'Reset';
+                textInput.disabled = true;
+                createParticles();
                 animate();
             }
 
-            // Attach event listener to the restart button
-            restartButton.addEventListener('click', restart);
+            function resetAnimation() {
+                isAnimating = false;
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                particles = [];
+                animateButton.textContent = 'Animate';
+                textInput.disabled = false;
+                ctx.fillStyle = '#1a202c';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
 
-            // Start the animation on window load.
-            window.onload = function() {
-                restart();
-            };
-        });
+            // --- Event Listeners for Controls ---
+            animateButton.addEventListener('click', () => {
+                if (isAnimating) {
+                    resetAnimation();
+                } else {
+                    startAnimation();
+                }
+            });
+
+            toggleButton.addEventListener('click', () => {
+                controlsContainer.classList.toggle('active');
+            });
+
+            textInput.addEventListener('input', (e) => {
+                textValue = e.target.value;
+            });
+
+            // --- Initial setup ---
+            createParticles();
+            startAnimation();
+            textInput.value = textValue;
+        })();
     </script>
+
 </body>
 </html>
